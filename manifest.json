@@ -1,7 +1,7 @@
 {
   "name": "maaba",
   "version": "2.0",
-  "description": "An extension that auto marks you in",
+  "description": "An in-house chrome extension that auto records colleagues' attendance to work.",
   "background": {
     "scripts": ["background.js"]
   },
