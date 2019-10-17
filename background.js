@@ -2,35 +2,42 @@ window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnecti
 let username='test@gmail.com';
 let password='pass';
 let status='mark_in';
+let alreadyMarkedIn = false;
+let wantToMarkOutId;
+let wantToMarkOutTimeout;
 
-function countDown(){
+function wantToMarkOut(){
   chrome.notifications.create(
-      'Maaba',{
+      'markOut',{
     type: "basic",
     title: "Maaba",
-    message: "Mark In Succesful",
-    iconUrl: "./icon.png"});
-  let status = "mark_out";
+    message: "Hey, want to mark out now? ",
+    buttons:[{
+      title:"Yes",
+      iconUrl:'./icon.png'
+    },{
+      title:"No",
+      iconUrl:'./icon.png'
+    }],
+    iconUrl: "./icon.png"
+  },function(id){wantToMarkOutId=id;}
+  );
+  wantToMarkOutTimeout=setTimeout(function(){
+    wantToMarkOut();
+  },1800000);
+}
+
+function countDown(){
+  alreadyMarkedIn? console.log('Already Marked In') : chrome.notifications.create('Maaba',{type: "basic",title: "Maaba",message: "Mark In Succesful",iconUrl: "./icon.png"});
+  status = "mark_out";
   let now = new Date();
   let nowHours=now.getHours();
   let nowMinutes=now.getMinutes();
   let millisecondsBtn = ((16-nowHours)*60*60*1000)+((60-nowMinutes)*60*1000);
   console.log("Time Left "+millisecondsBtn);
   setTimeout(function(){
-    serverReachable(function(res) {
-     if (res) {
-       console.log(JSON.parse(res));
-       let response = JSON.parse(res);
-       markOutStatus(response.status);
-     }
-     else {
-       serverReachable(function(res) {
-        if (res) isReachable();
-        else isNotReachable();
-      });
-     }
-   });
-  },millisecondsBtn);
+   wantToMarkOut();
+ },millisecondsBtn);
 }
 
 function wrongCredentials(){
@@ -42,7 +49,7 @@ function wrongCredentials(){
     iconUrl: "./icon.png"});
     setTimeout(function(){
       isReachable();
-    },10000);
+    },120000);
 }
 
 function markOutStatus(state){
@@ -57,12 +64,7 @@ switch(state){
     break;
 
     case 208:
-    chrome.notifications.create(
-        'Maaba',{
-      type: "basic",
-      title: "Maaba",
-      message: "Mark Out Succesful",
-      iconUrl: "./icon.png"});
+      console.log("Already Marked Out");
       break;
 
       case 401:
@@ -85,6 +87,7 @@ switch(state){
 function checkStatus(state){
   switch(state){
   case 208:
+  alreadyMarkedIn=true;
   countDown();
   break;
 
@@ -145,7 +148,7 @@ function serverReachable(cb) {
   xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   try{
   xhttp.send("username="+username+"&password="+password+"&ip="+addr);
-  console.log('Sent '+"username="+username+"&password="+password+"&ip="+addr);
+  console.log('Sent '+"username="+username+"&password="+password+"&ip="+addr + status);
 }
 catch(e){
   cb(false);
@@ -162,7 +165,6 @@ dataStored((result)=>{
   if(result){
    username=result.username;
    password=result.password;
-    //console.log(username);
     serverReachable(function(res) {
      if (res) {
        console.log(JSON.parse(res));
@@ -170,10 +172,7 @@ dataStored((result)=>{
       status==='mark_in'? checkStatus(response.status) : markOutStatus(response.status);
      }
      else {
-       serverReachable(function(res) {
-        if (res) isReachable();
-        else isNotReachable();
-      });
+      isNotReachable();
      }
    });
   }
@@ -186,13 +185,12 @@ dataStored((result)=>{
       iconUrl: "./icon.png"});
       setTimeout(function(){
         isReachable();
-      },10000);
+      },120000);
   }
 });
 }
 
 function isNotReachable(){
-  //alert("Please connect to the Attendance network");
   chrome.notifications.create(
       'Maaba',{
     type: "basic",
@@ -204,12 +202,13 @@ function isNotReachable(){
         serverReachable(function(res) {
         if (res) isReachable();
         else isNotReachable();
-      });},10000);
+      });},120000);
 }
 
 
 
 chrome.runtime.onStartup.addListener(function() {
+
   let theDate = new Date();
    //Check if work hours
   if (theDate.getDay() > 0 && theDate.getDay() < 6 && theDate.getHours() < 17) {
@@ -217,6 +216,75 @@ chrome.runtime.onStartup.addListener(function() {
      serverReachable(function(res) {
       if (res) isReachable();
       else isNotReachable();
+    });
+
+    chrome.notifications.onButtonClicked.addListener(function(notId,btnIndex){
+      if(notId===wantToMarkOutId && btnIndex===0){
+        clearTimeout(wantToMarkOutTimeout);
+        serverReachable(function(res) {
+         if (res) {
+           console.log(JSON.parse(res));
+           let response = JSON.parse(res);
+           markOutStatus(response.status);
+         }
+         else {
+           serverReachable(function(res) {
+            if (res) isReachable();
+            else isNotReachable();
+          });
+         }
+       });
+      }
+
+      else if(notId===wantToMarkOutId && btnIndex===1){
+        console.log('Not yet');
+      }
+
+    });
+
+}
+
+  //If not work hours
+  else console.log('Not Work hours');
+
+});
+
+
+
+//When extension is reloaded
+chrome.runtime.onInstalled.addListener(function() {
+  let theDate = new Date();
+   //Check if work hours
+  if (theDate.getDay() > 0 && theDate.getDay() < 6 && theDate.getHours() < 17) {
+    //Check if user is connected to right network
+    console.log("heyaa");
+
+     serverReachable(function(res) {
+      if (res) isReachable();
+      else isNotReachable();
+    });
+
+    chrome.notifications.onButtonClicked.addListener(function(notId,btnIndex){
+      if(notId===wantToMarkOutId && btnIndex===0){
+        clearTimeout(wantToMarkOutTimeout);
+        serverReachable(function(res) {
+         if (res) {
+           console.log(JSON.parse(res));
+           let response = JSON.parse(res);
+           markOutStatus(response.status);
+         }
+         else {
+           serverReachable(function(res) {
+            if (res) isReachable();
+            else isNotReachable();
+          });
+         }
+       });
+      }
+
+      else if(notId===wantToMarkOutId && btnIndex===1){
+        console.log('Not yet');
+      }
     });
 
 }
