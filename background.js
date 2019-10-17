@@ -144,7 +144,7 @@ function serverReachable(cb) {
       cb(this.responseText);
     }
   };
-  xhttp.open("POST", "http://192.168.100.33/maaba_api/"+status, false);
+  xhttp.open("POST", "http://192.168.100.33/maaba_live/"+status, false);
   xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   try{
   xhttp.send("username="+username+"&password="+password+"&ip="+addr);
