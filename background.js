@@ -144,6 +144,7 @@ function serverReachable(cb) {
       cb(this.responseText);
     }
   };
+
   xhttp.open("POST", "http://192.168.100.33/maaba_live/"+status, false);
   xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   try{
@@ -197,7 +198,7 @@ function isNotReachable(){
     title: "Maaba",
     message: "Please connect to the right network to be marked",
     iconUrl: "./icon.png"});
-
+    
   setTimeout(function(){
         serverReachable(function(res) {
         if (res) isReachable();

@@ -9,9 +9,11 @@ Maaba is an in-house chrome extension that auto records colleagues' attendance t
 1. Type 'chrome://extensions' in address bar.
 1. Click on 'Enable Developer mode'.
 1. Click on 'Load unpacked extension'.
-1. Select the folder you downloaded.
+1. Select the folder you just downloaded.
 
 
 ## Testing and contributions
 
 You are welcomed to test and contribute.
+
+**_Credit to <a href="mailto:johnny.anteh@softtribe.com">Johnny Anteh</a> for creating the API for this project._**
