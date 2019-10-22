@@ -24,7 +24,7 @@ function wantToMarkOut(){
   );
   wantToMarkOutTimeout=setTimeout(function(){
     wantToMarkOut();
-  },1800000);
+  },900000);
 }
 
 function countDown(){
@@ -49,7 +49,7 @@ function wrongCredentials(){
     iconUrl: "./icon.png"});
     setTimeout(function(){
       isReachable();
-    },120000);
+    },30000);
 }
 
 function markOutStatus(state){
@@ -185,7 +185,7 @@ dataStored((result)=>{
       iconUrl: "./icon.png"});
       setTimeout(function(){
         isReachable();
-      },120000);
+      },30000);
   }
 });
 }
@@ -202,7 +202,7 @@ function isNotReachable(){
         serverReachable(function(res) {
         if (res) isReachable();
         else isNotReachable();
-      });},120000);
+      });},30000);
 }
 
 
