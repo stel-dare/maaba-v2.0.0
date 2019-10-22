@@ -6,6 +6,21 @@ let alreadyMarkedIn = false;
 let wantToMarkOutId;
 let wantToMarkOutTimeout;
 
+function browserNotClosed(){
+  //get date of last mark in
+  let d = new Date();
+  let browserInfo ={
+    date: d.getDate()
+  }
+  //store date
+  chrome.storage.sync.set({ "browserInfo":browserInfo}, function() {
+    console.log("worked");
+  });
+
+  //Set alarm
+ chrome.alarms.create("myAlarm", {delayInMinutes: 60, periodInMinutes: 60} );
+}
+
 function wantToMarkOut(){
   chrome.notifications.create(
       'markOut',{
@@ -29,7 +44,9 @@ function wantToMarkOut(){
 
 function countDown(){
   alreadyMarkedIn? console.log('Already Marked In') : chrome.notifications.create('Maaba',{type: "basic",title: "Maaba",message: "Mark In Succesful",iconUrl: "./icon.png"});
+  alreadyMarkedIn=false;
   status = "mark_out";
+  browserNotClosed();
   let now = new Date();
   let nowHours=now.getHours();
   let nowMinutes=now.getMinutes();
@@ -61,10 +78,12 @@ switch(state){
     title: "Maaba",
     message: "Mark Out Succesful",
     iconUrl: "./icon.png"});
+    status='mark_in';
     break;
 
     case 208:
       console.log("Already Marked Out");
+      status='mark_in';
       break;
 
       case 401:
@@ -198,7 +217,7 @@ function isNotReachable(){
     title: "Maaba",
     message: "Please connect to the right network to be marked",
     iconUrl: "./icon.png"});
-    
+
   setTimeout(function(){
         serverReachable(function(res) {
         if (res) isReachable();
@@ -242,6 +261,15 @@ chrome.runtime.onStartup.addListener(function() {
       }
 
     });
+
+    chrome.alarms.onAlarm.addListener(function(alarm) {
+   console.log("My alarm "+alarm);
+  let d = new Date();
+  chrome.storage.sync.get("browserInfo", function(items) {
+    console.log(items.browserInfo.date);
+    items.browserInfo.date !== d.getDate()? serverReachable(function(res) {if (res) isReachable();else isNotReachable();}) : console.log("Day Not Ended");
+  });
+});
 
 }
 
@@ -288,8 +316,24 @@ chrome.runtime.onInstalled.addListener(function() {
       }
     });
 
+    chrome.alarms.onAlarm.addListener(function(alarm) {
+   console.log("My alarm "+alarm);
+  let d = new Date();
+  chrome.storage.sync.get("browserInfo", function(items) {
+    console.log(items.browserInfo.date);
+    items.browserInfo.date !== d.getDate()? serverReachable(function(res) {if (res) isReachable();else isNotReachable();}) : console.log("Day Not Ended");
+  });
+});
+
 }
 
   //If not work hours
   else console.log('Not Work hours');
 });
+
+//When Computer is suspended
+/*
+chrome.idle.onStateChanged.addListener(function(res){
+  console.log("My Res "+res);
+});
+*/
